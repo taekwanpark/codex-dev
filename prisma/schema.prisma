@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql" // or mysql
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  name          String
+  email         String        @unique
+  phone         String?
+  role          Role          @default(customer)
+  reservations  Reservation[]
+  payments      Payment[]
+}
+
+enum Role {
+  admin
+  staff
+  customer
+}
+
+model Car {
+  id           Int        @id @default(autoincrement())
+  brand        String
+  model        String
+  plate        String     @unique
+  status       CarStatus  @default(available)
+  dailyRate    Float
+  reservations Reservation[]
+}
+
+enum CarStatus {
+  available
+  rented
+  maintenance
+}
+
+model Reservation {
+  id         Int                @id @default(autoincrement())
+  car        Car                @relation(fields: [carId], references: [id])
+  carId      Int
+  user       User               @relation(fields: [userId], references: [id])
+  userId     Int
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Float
+  status     ReservationStatus  @default(pending)
+  payment    Payment?
+}
+
+enum ReservationStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+model Payment {
+  id            Int       @id @default(autoincrement())
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  reservationId Int
+  method        String
+  amount        Float
+  timestamp     DateTime   @default(now())
+}
